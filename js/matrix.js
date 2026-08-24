@@ -1,61 +1,50 @@
-// Matrix Rain Background Effect
+// Low-impact matrix background. Disabled for reduced-motion users and paused off-screen.
 const canvas = document.getElementById('matrix-bg');
-const ctx = canvas.getContext('2d');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Set canvas size
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resize();
-window.addEventListener('resize', resize);
+if (canvas && !reduceMotion) {
+  const ctx = canvas.getContext('2d');
+  const chars = 'アイウエオカキクケコ0123456789ABCDEF<>{}[]|'.split('');
+  const fontSize = 16;
+  let drops = [];
+  let frame;
+  let lastDraw = 0;
 
-// Characters (katakana + numbers + symbols)
-const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>{}[]|';
-const charArray = chars.split('');
-
-// Columns
-const fontSize = 14;
-let columns = Math.floor(canvas.width / fontSize);
-let drops = [];
-
-// Initialize drops
-function initDrops() {
-  columns = Math.floor(canvas.width / fontSize);
-  drops = [];
-  for (let i = 0; i < columns; i++) {
-    drops[i] = Math.random() * -100;
+  function resize() {
+    const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+    canvas.width = Math.floor(window.innerWidth * ratio);
+    canvas.height = Math.floor(window.innerHeight * ratio);
+    canvas.style.width = `${window.innerWidth}px`;
+    canvas.style.height = `${window.innerHeight}px`;
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    drops = Array.from({ length: Math.ceil(window.innerWidth / fontSize) }, () => Math.random() * -80);
   }
-}
-initDrops();
-window.addEventListener('resize', initDrops);
 
-// Draw
-function draw() {
-  // Semi-transparent black to create fade effect
-  ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  function draw(time) {
+    if (time - lastDraw > 70) {
+      ctx.fillStyle = 'rgba(8, 10, 9, 0.08)';
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      ctx.fillStyle = '#00f58a';
+      ctx.font = `${fontSize}px monospace`;
 
-  // Green text
-  ctx.fillStyle = '#00ff88';
-  ctx.font = fontSize + 'px monospace';
-
-  for (let i = 0; i < drops.length; i++) {
-    // Random character
-    const char = charArray[Math.floor(Math.random() * charArray.length)];
-    
-    // Draw character
-    ctx.fillText(char, i * fontSize, drops[i] * fontSize);
-
-    // Reset drop randomly after it goes off screen
-    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-      drops[i] = 0;
+      drops.forEach((drop, index) => {
+        const char = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(char, index * fontSize, drop * fontSize);
+        if (drop * fontSize > window.innerHeight && Math.random() > 0.98) drops[index] = 0;
+        else drops[index] += 1;
+      });
+      lastDraw = time;
     }
-
-    // Move drop
-    drops[i]++;
+    frame = requestAnimationFrame(draw);
   }
-}
 
-// Animate
-setInterval(draw, 50);
+  function handleVisibility() {
+    if (document.hidden) cancelAnimationFrame(frame);
+    else frame = requestAnimationFrame(draw);
+  }
+
+  resize();
+  window.addEventListener('resize', resize, { passive: true });
+  document.addEventListener('visibilitychange', handleVisibility);
+  frame = requestAnimationFrame(draw);
+}
