@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MixCheck | Basic Beny</title>
+  <meta name="description" content="A free in-browser read of a stereo mix for DnB, neuro, and rollers. Loudness, true peak, mono sub, kick and sub. Then one way to book Beny.">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="page-mixcheck">
+  <canvas id="matrix-bg"></canvas>
+
+  <nav>
+    <a href="../" class="logo">BASIC<span>BENY</span></a>
+    <ul class="nav-links">
+      <li><a href="../#shop">Shop</a></li>
+      <li><a href="./" aria-current="page">MixCheck</a></li>
+      <li><a href="../#mastering">Mastering</a></li>
+      <li><a href="../#about">About</a></li>
+      <li><a href="../#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <header class="mixcheck-intro">
+      <div class="section-header">
+        <h2>// MixCheck</h2>
+        <h1>Hear the low end before you call it done.</h1>
+      </div>
+      <p>Upload a stereo mix and pick a lane. You get a short read, in plain language, on the things bass music actually gets wrong: loudness against streaming targets, true peak, whether the sub holds up in mono, whether the kick and the sub are stepping on each other, and how the balance sits against a generic profile for that lane.</p>
+      <p>The file stays in this tab. MixCheck reads it here. Nothing is uploaded. Nothing comes back mastered. There is no file to download.</p>
+      <p>MixCheck is free. It is not its own product. It is a straight look at the meters, and then one sensible session if you want Beny on the record with you.</p>
+      <p>There is no hit score. A meter cannot hear groove, arrangement, or whether you picked the right sound. When the read is past its ears, it says so.</p>
+    </header>
+
+    <section class="mixcheck-tool" aria-labelledby="read-label">
+      <h2 id="read-label">// Read a mix</h2>
+      <p class="lane-copy">A bounce of the whole mix is the right file. WAV is the cleaner read on true peak. MP3 works, and the report will say so.</p>
+
+      <label class="dropzone" id="dropzone">
+        <input id="file" type="file" accept=".wav,.mp3,audio/wav,audio/wave,audio/x-wav,audio/mpeg">
+        <p class="dropzone-title" id="drop-title">Drop a stereo WAV or MP3</p>
+        <p id="drop-hint">Or click to choose one. It never leaves this browser.</p>
+      </label>
+
+      <div class="lanes" role="radiogroup" aria-label="Lane">
+        <button type="button" class="lane" role="radio" data-lane="dnb" aria-checked="true">
+          <strong>DnB</strong>
+          <span>Sub-forward. The kick still has a place to speak. Low-mids kept out of the way. Tops present.</span>
+        </button>
+        <button type="button" class="lane" role="radio" data-lane="neuro" aria-checked="false">
+          <strong>Neuro</strong>
+          <span>The same weight down low, more movement through the bass, more bite in the presence.</span>
+        </button>
+        <button type="button" class="lane" role="radio" data-lane="rollers" aria-checked="false">
+          <strong>Rollers</strong>
+          <span>The roll is the record. Deeper sub, warmer mids, less glare up top.</span>
+        </button>
+      </div>
+
+      <div class="mixcheck-actions">
+        <button type="button" class="btn btn-primary" id="read" disabled>Read the mix</button>
+        <button type="button" class="btn btn-secondary" id="reset" hidden>Check another mix</button>
+      </div>
+      <p class="file-note" id="file-note">Stays in this tab. Close the page and the file is gone.</p>
+
+      <div class="progress" id="progress" hidden>
+        <div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+        <p class="progress-label" id="progress-label">Reading the mix</p>
+      </div>
+      <p class="mixcheck-error" id="error" hidden></p>
+    </section>
+
+    <section id="report" class="mixcheck-report" hidden aria-live="polite"></section>
+
+    <section class="prose" aria-labelledby="limits-label">
+      <h2 id="limits-label">// What the meters never hear</h2>
+      <p>Groove and swing. Whether the drum pattern breathes. Arrangement, and whether the drop earns the build. Sound choice: the Reese, the kick, the hat. Emotion. Taste.</p>
+      <p>Those are musical calls. They are the reason to sit with another producer. They are not a reason to trust a number.</p>
+    </section>
+
+    <section class="prose" aria-labelledby="map-label">
+      <h2 id="map-label">// Where a read points</h2>
+      <p>One button at the end of the read. The same calendar already on this site. Prices are the ones on the homepage.</p>
+      <ul class="map-list">
+        <li><strong>Quick Fix · 30 minutes · $40.</strong> The sub disappears in mono, the kick and the sub are stepping on each other, or true peak is over the line, and the rest of the mix is close. Walk through that one thing live.</li>
+        <li><strong>1 hour · $75.</strong> The numbers are already in range, or loudness and balance need a real pass on the whole track. Full track master, mix consultation, a revision included.</li>
+        <li><strong>Deep Dive · 1.5 hours · $100.</strong> Several problems are stacked. Detailed mastering and a mix breakdown.</li>
+        <li><strong>Full Project · 3 hours · $300.</strong> An EP or an album. One bounce never sends you there. That session stays on the homepage, for when the whole release is the job.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer id="contact">
+    <p>&copy; 2026 Rhodes Resonance LLC. All rights reserved.</p>
+    <div class="social-links">
+      <a href="#">SoundCloud</a>
+      <a href="#">Instagram</a>
+      <a href="#">YouTube</a>
+    </div>
+  </footer>
+
+  <script src="../js/matrix.js"></script>
+  <script src="../js/mixcheck-analyze.js"></script>
+  <script src="../js/mixcheck-report.js"></script>
+  <script src="../js/mixcheck-ui.js"></script>
+</body>
+</html>
