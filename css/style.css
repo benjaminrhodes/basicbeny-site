@@ -568,9 +568,11 @@ footer p {
 
 .lane strong {
   display: block;
-  font-family: var(--font-mono);
+  font-family: var(--font-main);
+  font-weight: 600;
   font-size: 0.95rem;
   margin-bottom: 0.35rem;
+  font-variant-ligatures: none;
 }
 
 .lane span {
