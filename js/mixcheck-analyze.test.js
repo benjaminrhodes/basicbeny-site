@@ -406,6 +406,51 @@ test("a reference changes the comparison and still leaves one booking button", (
   assert.equal([...image.cards, image.next].filter((item) => item && item.href).length, 1);
 });
 
+test("each lane keeps its own generic profile", () => {
+  const ids = ["dnb", "neuro", "rollers", "dancefloor", "jumpup", "liquid", "breakbeat"];
+  const bands = ["sub", "bass", "lowmid", "mid", "presence", "air"];
+  ids.forEach((id) => {
+    assert.ok(Mix.LANES[id], id);
+    bands.forEach((band) => assert.equal(typeof Mix.LANES[id].target[band], "number"));
+    assert.equal(Mix.LANES[id].target.mid, 0);
+  });
+  assert.ok(Mix.LANES.rollers.target.sub - Mix.LANES.dancefloor.target.sub > 3);
+  assert.ok(Mix.LANES.jumpup.target.lowmid - Mix.LANES.neuro.target.lowmid > 3);
+  assert.ok(Mix.LANES.jumpup.target.sub < Mix.LANES.rollers.target.sub - 3);
+  assert.ok(Mix.LANES.neuro.target.presence - Mix.LANES.liquid.target.presence > 3);
+  assert.ok(Mix.LANES.liquid.target.lowmid - Mix.LANES.dnb.target.lowmid > 3);
+  assert.ok(Mix.LANES.dnb.target.sub - Mix.LANES.breakbeat.target.sub > 3);
+  assert.ok(Mix.LANES.breakbeat.target.presence - Mix.LANES.dnb.target.presence > 3);
+  assert.ok(Mix.LANES.dancefloor.target.bass - Mix.LANES.dnb.target.bass > 3);
+
+  const raw = {
+    durationSec: 90,
+    sampleRate: 48000,
+    channels: 2,
+    source: "wav",
+    warnings: [],
+    loudness: { integrated: -8.4, range: 4, band: "bass-window" },
+    truePeak: { dbtp: -1.4, sampleDbfs: -1.6, status: "safe" },
+    mono: { status: "holds", correlation: 0.98, cancellationDb: -0.2 },
+    kick: { status: "readable" },
+    width: {
+      overall: { correlation: 0.7, powerDb: -12, status: "ok" },
+      low: { correlation: 0.98, powerDb: -10, status: "narrow" },
+      top: { correlation: 0.4, powerDb: -18, status: "ok" },
+    },
+    bands: { sub: 5, bass: 0, lowmid: 2, mid: 0, presence: -3, air: -7 },
+  };
+  const liquid = Report.buildView(raw, "liquid");
+  assert.equal(liquid.laneId, "liquid");
+  assert.equal(liquid.laneLabel, "liquid");
+  assert.match(liquid.compareLabel, /liquid/);
+  const balance = liquid.cards.find((card) => card.id === "balance");
+  assert.equal(balance.figure, "Close to the profile");
+  const asNeuro = Report.buildView(raw, "neuro");
+  const neuroBalance = asNeuro.cards.find((card) => card.id === "balance");
+  assert.notEqual(neuroBalance.figure, "Close to the profile");
+});
+
 test("the homepage only gains a MixCheck link", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   assert.match(html, /href="mixcheck\/">MixCheck/);

@@ -89,7 +89,8 @@
   }
 
   function interpret(raw, laneId, referenceRaw) {
-    var lane = analyzeApi.LANES[laneId] || analyzeApi.LANES.dnb;
+    var laneKey = analyzeApi.LANES[laneId] ? laneId : "dnb";
+    var lane = analyzeApi.LANES[laneKey];
     var source = raw.source;
     var useRef = !!(referenceRaw && referenceRaw.bands && referenceRaw.bands.mid != null && isFinite(referenceRaw.bands.mid));
     var bands = [];
@@ -179,7 +180,7 @@
 
     return {
       raw: raw,
-      laneId: lane === analyzeApi.LANES.neuro ? "neuro" : lane === analyzeApi.LANES.rollers ? "rollers" : "dnb",
+      laneId: laneKey,
       laneLabel: lane.label,
       bands: bands,
       balanceStrong: strong,

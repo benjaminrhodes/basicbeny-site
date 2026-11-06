@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MixCheck | Basic Beny</title>
-  <meta name="description" content="A free in-browser read of a stereo mix for DnB, neuro, and rollers. Loudness, true peak, mono sub, kick and sub. Then one way to book Beny.">
+  <meta name="description" content="A free in-browser read of a stereo mix for DnB, liquid, jump up, dancefloor, and breaks. Loudness, true peak, width, and balance. Then one way to book Beny.">
   <meta name="theme-color" content="#0a0a0a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,7 +48,7 @@
       </label>
 
       <h3 class="compare-heading">Compare with</h3>
-      <p class="lane-copy">The lane profile is the default. It is a labeled shape for DnB, neuro, or rollers, not a record. Or drop a stereo bounce you trust. MixCheck does not ship anyone else's music.</p>
+      <p class="lane-copy">The lane profile is the default. It is a labeled shape for the lane you picked, not a record. Or drop a stereo bounce you trust. MixCheck does not ship anyone else's music.</p>
       <div class="compare" role="radiogroup" aria-label="What to compare with">
         <button type="button" class="compare-option" data-compare="profile" aria-checked="true">
           <strong>Lane profile</strong>
@@ -77,6 +77,22 @@
         <button type="button" class="lane" role="radio" data-lane="rollers" aria-checked="false">
           <strong>Rollers</strong>
           <span>The roll is the record. Deeper sub, warmer mids, less glare up top.</span>
+        </button>
+        <button type="button" class="lane" role="radio" data-lane="dancefloor" aria-checked="false">
+          <strong>Dancefloor</strong>
+          <span>Festival weight. A kick that punches, hooks in the tops, and a solid sub a step brighter than rollers.</span>
+        </button>
+        <button type="button" class="lane" role="radio" data-lane="jumpup" aria-checked="false">
+          <strong>Jump up</strong>
+          <span>Mid-bass forward. The growl and a big kick carry it. The sub is in the mix, not the whole tune.</span>
+        </button>
+        <button type="button" class="lane" role="radio" data-lane="liquid" aria-checked="false">
+          <strong>Liquid</strong>
+          <span>Smoother. Rolling low end, warmer mids, more room, and less bite than neuro.</span>
+        </button>
+        <button type="button" class="lane" role="radio" data-lane="breakbeat" aria-checked="false">
+          <strong>Breakbeat</strong>
+          <span>The break is the engine. Kick and snare punch sit with the sub, not behind a straight DnB roll.</span>
         </button>
       </div>
 

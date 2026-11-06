@@ -18,11 +18,20 @@
 
   // Band energy relative to the mids (400 Hz–2 kHz), in dB.
   // Wider bands naturally hold more pink-noise power; these offsets are
-  // "more sub than a flat-per-band mix", not a copy of any record.
+  // generic shapes for this page, not a copy of any record.
+  // A gap of more than 3 dB is what the report calls a lean.
   var LANES = {
     dnb: { label: "DnB", target: { sub: 4, bass: 2, lowmid: -3, mid: 0, presence: -1, air: -5 } },
     neuro: { label: "neuro", target: { sub: 3, bass: 3, lowmid: 0, mid: 0, presence: 1, air: -4 } },
     rollers: { label: "rollers", target: { sub: 6, bass: 3, lowmid: -2, mid: 0, presence: -3, air: -8 } },
+    // Kick and hooks forward. Sub stays solid, tops sit brighter than rollers.
+    dancefloor: { label: "dancefloor", target: { sub: 2, bass: 6, lowmid: -1, mid: 0, presence: 2, air: -1 } },
+    // Growl in the low-mids, big kick, sub present without rollers depth.
+    jumpup: { label: "jump up", target: { sub: 1, bass: 6, lowmid: 4, mid: 0, presence: 0, air: -4 } },
+    // Rolling weight, warmer mids, less bite than neuro.
+    liquid: { label: "liquid", target: { sub: 5, bass: 0, lowmid: 2, mid: 0, presence: -3, air: -7 } },
+    // Kick and snare share the job with the sub. Not a sub-led DnB shape.
+    breakbeat: { label: "breakbeat", target: { sub: 0, bass: 4, lowmid: 1, mid: 0, presence: 3, air: -2 } },
   };
 
   var LOUDNESS = {
