@@ -350,6 +350,10 @@ footer p {
   transition: color 0.3s ease;
 }
 
+.nav-links a[aria-current="page"] {
+  color: var(--accent);
+}
+
 .social-links a:hover {
   color: var(--accent);
 }
@@ -374,6 +378,14 @@ footer p {
   .nav-links {
     display: none; /* Add hamburger menu for mobile */
   }
+
+  /* MixCheck is a tool page. Keep its links usable without a homepage rewrite. */
+  .page-mixcheck .nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    justify-content: flex-end;
+  }
   
   .about-content {
     grid-template-columns: 1fr;
@@ -385,5 +397,412 @@ footer p {
   
   .btn {
     text-align: center;
+  }
+}
+
+/* MixCheck -------------------------------------------------------------- */
+
+.page-mixcheck {
+  --warn: #ffcc66;
+}
+
+.page-mixcheck main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 7.5rem 5% 4rem;
+}
+
+.page-mixcheck section {
+  padding: 2.25rem 0;
+}
+
+.page-mixcheck .mixcheck-intro h1 {
+  font-size: clamp(2.2rem, 6vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.08;
+  margin-bottom: 1.25rem;
+}
+
+.prose p,
+.mixcheck-intro p,
+.lane-copy,
+.dropzone p,
+.finding p,
+.next-step p,
+.file-note {
+  color: var(--text-secondary);
+}
+
+.prose p + p,
+.mixcheck-intro p + p {
+  margin-top: 1rem;
+}
+
+.mixcheck-tool h2,
+.prose h2,
+.next-step .kicker,
+.report-head .kicker {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+.dropzone {
+  position: relative;
+  display: block;
+  margin-top: 1.25rem;
+  padding: 2rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px dashed var(--accent-dim);
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.dropzone:hover,
+.dropzone.is-dragover {
+  border-style: solid;
+  border-color: var(--accent);
+  box-shadow: 0 0 30px var(--accent-glow);
+  background: #101612;
+}
+
+.dropzone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.dropzone .dropzone-title {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+}
+
+.compare-heading {
+  margin: 1.5rem 0 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.compare-option {
+  text-align: left;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  font-family: var(--font-main);
+}
+
+.compare-option strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+}
+
+.compare-option span {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.compare-option[aria-checked="true"] {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.compare-option:hover {
+  border-color: var(--accent-dim);
+}
+
+.dropzone-ref {
+  margin-top: 0.75rem;
+  padding: 1.25rem 1rem;
+}
+
+.dropzone-ref[hidden] {
+  display: none;
+}
+
+.lanes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.lane {
+  text-align: left;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.lane strong {
+  display: block;
+  font-family: var(--font-main);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+  font-variant-ligatures: none;
+}
+
+.lane span {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.lane[aria-checked="true"] {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.lane:hover {
+  border-color: var(--accent-dim);
+}
+
+.mixcheck-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.25rem;
+}
+
+.page-mixcheck button.btn {
+  display: inline-block;
+}
+
+.page-mixcheck button.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.file-note {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  margin-top: 0.85rem;
+}
+
+.progress {
+  margin-top: 1.25rem;
+}
+
+.progress-track {
+  height: 4px;
+  background: #1c1c1c;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.15s linear;
+}
+
+.progress-label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.mixcheck-error {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--warn);
+  border-radius: 8px;
+  color: var(--text-primary);
+}
+
+.report-head {
+  margin-bottom: 1.25rem;
+}
+
+.report-head h2 {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  line-height: 1.15;
+  margin-bottom: 0.4rem;
+}
+
+.report-meta {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+.report-warnings {
+  margin: 0.75rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text-secondary);
+}
+
+.finding {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid #333;
+  border-radius: 8px;
+  padding: 1.25rem 1.25rem 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.finding[data-tone="ok"] {
+  border-left-color: var(--accent);
+}
+
+.finding[data-tone="watch"] {
+  border-left-color: var(--warn);
+}
+
+.finding header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+}
+
+.finding h3 {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.finding-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.finding[data-tone="ok"] .finding-tag {
+  color: var(--accent);
+}
+
+.finding[data-tone="watch"] .finding-tag {
+  color: var(--warn);
+}
+
+.finding .finding-figure {
+  font-family: var(--font-mono);
+  font-size: 1.65rem;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin: 0.15rem 0 0.6rem;
+}
+
+.finding-body {
+  margin-bottom: 0.55rem;
+}
+
+.finding-notes {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.finding-notes li {
+  margin-top: 0.35rem;
+}
+
+.next-step {
+  margin-top: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 1.75rem 1.5rem;
+}
+
+.next-step h3 {
+  font-size: 1.7rem;
+  line-height: 1.2;
+  margin-bottom: 0.75rem;
+}
+
+.next-step .btn {
+  display: inline-block;
+  margin-top: 1.1rem;
+}
+
+.next-step-note {
+  margin-top: 0.85rem;
+  font-size: 0.85rem;
+}
+
+.map-list {
+  list-style: none;
+  margin-top: 1rem;
+}
+
+.map-list li {
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.map-list strong {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.page-mixcheck :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .page-mixcheck main {
+    padding-top: 8.5rem;
+  }
+
+  .lanes,
+  .compare {
+    grid-template-columns: 1fr;
+  }
+
+  .finding-figure {
+    font-size: 1.35rem;
+  }
+
+  .page-mixcheck nav {
+    align-items: flex-start;
+    gap: 0.75rem;
   }
 }
