@@ -490,6 +490,59 @@ footer p {
   margin-bottom: 0.35rem;
 }
 
+.compare-heading {
+  margin: 1.5rem 0 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.compare-option {
+  text-align: left;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  font-family: var(--font-main);
+}
+
+.compare-option strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+}
+
+.compare-option span {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.compare-option[aria-checked="true"] {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.compare-option:hover {
+  border-color: var(--accent-dim);
+}
+
+.dropzone-ref {
+  margin-top: 0.75rem;
+  padding: 1.25rem 1rem;
+}
+
 .lanes {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -733,7 +786,8 @@ footer p {
     padding-top: 8.5rem;
   }
 
-  .lanes {
+  .lanes,
+  .compare {
     grid-template-columns: 1fr;
   }
 

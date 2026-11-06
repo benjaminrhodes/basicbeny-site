@@ -31,7 +31,7 @@
         <h2>// MixCheck</h2>
         <h1>Hear the low end before you call it done.</h1>
       </div>
-      <p>Upload a stereo mix and pick a lane. You get a short read, in plain language, on the things bass music actually gets wrong: loudness against streaming targets, true peak, whether the sub holds up in mono, whether the kick and the sub are stepping on each other, and how the balance sits against a generic profile for that lane.</p>
+      <p>Upload a stereo mix and pick a lane. You get a short read, in plain language, on the things bass music actually gets wrong: loudness against streaming targets, true peak, whether the sub holds up in mono, how wide the picture is from the sub up to the hats, whether the kick and the sub are stepping on each other, and how the balance sits against a generic profile or a reference you bring.</p>
       <p>The file stays in this tab. MixCheck reads it here. Nothing is uploaded. Nothing comes back mastered. There is no file to download.</p>
       <p>MixCheck is free. It is not its own product. It is a straight look at the meters, and then one sensible session if you want Beny on the record with you.</p>
       <p>There is no hit score. A meter cannot hear groove, arrangement, or whether you picked the right sound. When the read is past its ears, it says so.</p>
@@ -45,6 +45,24 @@
         <input id="file" type="file" accept=".wav,.mp3,audio/wav,audio/wave,audio/x-wav,audio/mpeg">
         <p class="dropzone-title" id="drop-title">Drop a stereo WAV or MP3</p>
         <p id="drop-hint">Or click to choose one. It never leaves this browser.</p>
+      </label>
+
+      <h3 class="compare-heading">Compare with</h3>
+      <p class="lane-copy">The lane profile is the default. It is a labeled shape for DnB, neuro, or rollers, not a record. Or drop a stereo bounce you trust. MixCheck does not ship anyone else's music.</p>
+      <div class="compare" role="radiogroup" aria-label="What to compare with">
+        <button type="button" class="compare-option" data-compare="profile" aria-checked="true">
+          <strong>Lane profile</strong>
+          <span>The generic shape for the lane you picked.</span>
+        </button>
+        <button type="button" class="compare-option" data-compare="reference" aria-checked="false">
+          <strong>My reference</strong>
+          <span>A stereo WAV or MP3. It stays in this tab, same as the mix.</span>
+        </button>
+      </div>
+      <label class="dropzone dropzone-ref" id="ref-dropzone" hidden>
+        <input id="ref-file" type="file" accept=".wav,.mp3,audio/wav,audio/wave,audio/x-wav,audio/mpeg">
+        <p class="dropzone-title" id="ref-title">Drop a reference WAV or MP3</p>
+        <p id="ref-hint">The mix is read next to this file. Nothing is uploaded.</p>
       </label>
 
       <div class="lanes" role="radiogroup" aria-label="Lane">
@@ -87,8 +105,8 @@
       <h2 id="map-label">// Where a read points</h2>
       <p>One button at the end of the read. The same calendar already on this site. Prices are the ones on the homepage.</p>
       <ul class="map-list">
-        <li><strong>Quick Fix · 30 minutes · $40.</strong> The sub disappears in mono, the kick and the sub are stepping on each other, or true peak is over the line, and the rest of the mix is close. Walk through that one thing live.</li>
-        <li><strong>1 hour · $75.</strong> The numbers are already in range, or loudness and balance need a real pass on the whole track. Full track master, mix consultation, a revision included.</li>
+        <li><strong>Quick Fix · 30 minutes · $40.</strong> The sub disappears in mono, the kick and the sub are stepping on each other, true peak is over the line, or the stereo image is the one clear problem: sub too wide, or the top overly narrow or overly wide. The rest of the mix is close. Walk through that one thing live.</li>
+        <li><strong>1 hour · $75.</strong> The numbers are already in range, or loudness and balance need a real pass. If you brought a reference and the mix is far from it across the board, this is the sitting. Full track master, mix consultation, a revision included.</li>
         <li><strong>Deep Dive · 1.5 hours · $100.</strong> Several problems are stacked. Detailed mastering and a mix breakdown.</li>
         <li><strong>Full Project · 3 hours · $300.</strong> An EP or an album. One bounce never sends you there. That session stays on the homepage, for when the whole release is the job.</li>
       </ul>

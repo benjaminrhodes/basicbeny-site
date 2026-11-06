@@ -190,6 +190,12 @@ test("chooseSession follows the one-button map", () => {
   expect({ peak: "hot" }, "quick", "peak");
   expect({ mono: "drops", kick: "sub-on-kick" }, "quick", "low-end");
   expect({ mono: "drops", peak: "hot" }, "quick", "technical");
+  expect({ width: "top-narrow" }, "quick", "width");
+  expect({ width: "top-wide" }, "quick", "width");
+  expect({ width: "top-narrow", mono: "drops" }, "quick", "image");
+  expect({ referenceGap: "loudness" }, "standard", "reference");
+  expect({ referenceGap: "large" }, "standard", "reference");
+  expect({ referenceGap: "width" }, "quick", "width");
   expect({}, "standard", "polish");
   expect({ loudness: "streaming" }, "standard", "polish");
   expect({ loudness: "hot" }, "standard", "loudness");
@@ -214,6 +220,11 @@ test("the report's only booking link matches the session", () => {
     truePeak: { dbtp: -1.4, sampleDbfs: -1.6, status: "safe" },
     mono: { status: "drops", correlation: -0.8, cancellationDb: -12 },
     kick: { status: "readable" },
+    width: {
+      overall: { correlation: 0.72, powerDb: -12, status: "ok" },
+      low: { correlation: 0.98, powerDb: -10, status: "narrow" },
+      top: { correlation: 0.41, powerDb: -18, status: "ok" },
+    },
     bands: { sub: 4, bass: 2, lowmid: -3, mid: 0, presence: -1, air: -5 },
   };
   const view = Report.buildView(raw, "dnb");
@@ -222,6 +233,7 @@ test("the report's only booking link matches the session", () => {
   assert.match(view.next.button, /\$40/);
   assert.match(view.next.body, /mono/i);
   assert.equal(view.cards.filter((card) => card.id === "limits").length, 1);
+  assert.equal(view.cards.filter((card) => card.id === "width").length, 1);
 
   raw.mono = { status: "holds", correlation: 0.98, cancellationDb: -0.2 };
   const polish = Report.buildView(raw, "neuro");
@@ -248,15 +260,33 @@ test("a full-band mix in the pocket books the hour, and an inverted low end book
     const gain = (0.08 / rms) * Math.pow(10, Mix.LANES.dnb.target[band.id] / 20);
     pieces[band.id] = filtered.map((sample) => sample * gain);
   }
+  const sideRand = mulberry32(0x51de);
+  const sideNoise = new Float32Array(n);
+  for (let i = 0; i < n; i++) sideNoise[i] = sideRand() * 2 - 1;
+  const sidePieces = {};
+  for (const id of ["presence", "air"]) {
+    const band = Mix.BANDS.find((item) => item.id === id);
+    const filtered = Mix.filterBand(sideNoise, sampleRate, band.lo, band.hi);
+    let sum = 0;
+    for (let i = 0; i < filtered.length; i++) sum += filtered[i] * filtered[i];
+    const rms = Math.sqrt(sum / filtered.length) || 1;
+    let pieceSum = 0;
+    for (let i = 0; i < n; i++) pieceSum += pieces[id][i] * pieces[id][i];
+    const pieceRms = Math.sqrt(pieceSum / n) || 1;
+    const gain = (0.85 * pieceRms) / rms;
+    sidePieces[id] = filtered.map((sample) => sample * gain);
+  }
 
   function mix(invertLow) {
     const left = new Float32Array(n);
     const right = new Float32Array(n);
     for (const band of Mix.BANDS) {
       const sign = invertLow && (band.id === "sub" || band.id === "bass") ? -1 : 1;
+      const side = sidePieces[band.id];
       for (let i = 0; i < n; i++) {
-        left[i] += pieces[band.id][i];
-        right[i] += sign * pieces[band.id][i];
+        const sideSample = side ? side[i] : 0;
+        left[i] += pieces[band.id][i] + sideSample;
+        right[i] += sign * pieces[band.id][i] - sideSample;
       }
     }
     for (let i = 0; i < n; i++) {
@@ -296,6 +326,7 @@ test("a full-band mix in the pocket books the hour, and an inverted low end book
     kick: healthy.kick,
     bands: healthy.bands,
     next: healthyView.next && healthyView.next.reason,
+    width: healthy.width,
   }));
   assert.equal(healthyView.next.href, Report.SESSIONS.standard.href);
   assert.equal(flipped.mono.status, "drops", JSON.stringify(flipped.mono));
@@ -309,6 +340,70 @@ test("a full-band mix in the pocket books the hour, and an inverted low end book
   assert.equal(flippedView.next.href, "https://cal.com/rhodes-resonance/30min");
   const buttons = [healthyView.next.href, flippedView.next.href];
   assert.equal(new Set(buttons).size, 2);
+});
+
+test("stereo width keeps a narrow sub and calls an out-of-phase top too wide", async () => {
+  const sampleRate = 48000;
+  const n = sampleRate * 2;
+  const rand = mulberry32(3);
+  const noise = new Float32Array(n);
+  for (let i = 0; i < n; i++) noise[i] = rand() * 2 - 1;
+  const low = Mix.filterBand(noise, sampleRate, 30, 90);
+  const high = Mix.filterBand(noise, sampleRate, 5000, 12000);
+  const left = new Float32Array(n);
+  const right = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    left[i] = low[i] * 0.4 + high[i] * 0.3;
+    right[i] = low[i] * 0.4 - high[i] * 0.3;
+  }
+  const result = await Mix.analyze({ left, right, sampleRate, source: "wav", channels: 2 });
+  assert.equal(result.width.low.status, "narrow", JSON.stringify(result.width));
+  assert.ok(result.width.top.correlation < 0.05, JSON.stringify(result.width));
+  assert.equal(result.width.top.status, "too-wide");
+  const card = Report.buildView(result, "dnb").cards.find((item) => item.id === "width");
+  assert.equal(card.figure, "Wide up top");
+  assert.match(card.body, /4 kHz/);
+  assert.match(card.body, /120 Hz/);
+});
+
+test("a reference changes the comparison and still leaves one booking button", () => {
+  const raw = {
+    durationSec: 90,
+    sampleRate: 48000,
+    channels: 2,
+    source: "wav",
+    warnings: [],
+    loudness: { integrated: -8, range: 3, band: "bass-window" },
+    truePeak: { dbtp: -1.5, sampleDbfs: -1.8, status: "safe" },
+    mono: { status: "holds", correlation: 0.98, cancellationDb: -0.2 },
+    kick: { status: "readable" },
+    width: {
+      overall: { correlation: 0.7, powerDb: -12, status: "ok" },
+      low: { correlation: 0.97, powerDb: -10, status: "narrow" },
+      top: { correlation: 0.4, powerDb: -18, status: "ok" },
+    },
+    bands: { sub: 4, bass: 2, lowmid: -3, mid: 0, presence: -1, air: -5 },
+  };
+  const quieter = JSON.parse(JSON.stringify(raw));
+  quieter.loudness = { integrated: -14, range: 3, band: "streaming" };
+  const level = Report.buildView(raw, "dnb", { raw: quieter, name: "ref.wav" });
+  assert.equal(level.compareLabel, "next to ref.wav");
+  assert.equal(level.next.session, "standard");
+  assert.equal(level.next.reason, "reference");
+  assert.equal(level.next.href, "https://cal.com/rhodes-resonance/60min");
+  assert.equal(level.cards.filter((card) => card.id === "width").length, 1);
+  const loudCard = level.cards.find((card) => card.id === "loudness");
+  assert.match(loudCard.notes.join(" "), /reference/i);
+
+  const wide = JSON.parse(JSON.stringify(raw));
+  wide.width.top = { correlation: -0.1, powerDb: -16, status: "too-wide" };
+  const image = Report.buildView(wide, "rollers", { raw, name: "ref.wav" });
+  assert.equal(image.next.session, "quick");
+  assert.equal(image.next.reason, "width");
+  assert.equal(image.next.href, "https://cal.com/rhodes-resonance/30min");
+  const widthCard = image.cards.find((card) => card.id === "width");
+  assert.match(widthCard.notes.join(" "), /reference/i);
+  assert.equal([...image.cards, image.next].filter((item) => item && item.href).length, 1);
 });
 
 test("the homepage only gains a MixCheck link", () => {

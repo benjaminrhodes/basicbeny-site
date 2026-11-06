@@ -297,6 +297,41 @@ var TRUE_PEAK_PHASES = [
     return "holds";
   }
 
+  function correlationStats(sumLL, sumRR, sumLR, n) {
+    var power = n ? (0.5 * (sumLL + sumRR)) / n : 0;
+    var powerDb = dbFromPower(power);
+    var den = Math.sqrt(Math.max(sumLL, 0) * Math.max(sumRR, 0));
+    var correlation = den > 1e-20 ? sumLR / den : 0;
+    if (correlation > 1) correlation = 1;
+    if (correlation < -1) correlation = -1;
+    return { correlation: correlation, powerDb: powerDb };
+  }
+
+  // Overall correlation is pulled toward the loudest band, usually the sub.
+  function classifyOverallWidth(correlation, powerDb) {
+    if (!(powerDb > -50)) return "quiet";
+    if (correlation < 0) return "phasey";
+    if (correlation >= 0.9) return "narrow";
+    if (correlation < 0.15) return "wide";
+    return "ok";
+  }
+
+  // Under 120 Hz, narrow is the desirable bass-music result.
+  function classifyLowWidth(correlation, powerDb) {
+    if (!(powerDb > -50)) return "quiet";
+    if (correlation >= 0.85) return "narrow";
+    if (correlation >= 0.5) return "wide";
+    return "too-wide";
+  }
+
+  // Above ~4 kHz. A centered hat is narrow. Negative or near-zero agreement is too wide.
+  function classifyTopWidth(correlation, powerDb) {
+    if (!(powerDb > -45)) return "quiet";
+    if (correlation < 0.05) return "too-wide";
+    if (correlation >= 0.82) return "narrow";
+    return "ok";
+  }
+
   function classifyKick(stats) {
     if (stats.lowDbfs < -50) return "no-sub";
     if (stats.dipDb >= 7 && stats.peakDb >= 5) return "fighting";
@@ -457,6 +492,9 @@ var TRUE_PEAK_PHASES = [
     var lowR = stereo ? bandpass4(fs, 30, 150) : null;
     var hfL = butterworth4("hp", fs, 2000);
     var hfR = stereo ? butterworth4("hp", fs, 2000) : null;
+    var measureTop = stereo && fs > 12000;
+    var topL = measureTop ? butterworth4("hp", fs, 4000) : null;
+    var topR = measureTop ? butterworth4("hp", fs, 4000) : null;
 
     var bandL = [];
     var bandR = [];
@@ -488,6 +526,14 @@ var TRUE_PEAK_PHASES = [
     var sumLR = 0;
     var sumMid = 0;
     var monoN = 0;
+    var sumFullLL = 0;
+    var sumFullRR = 0;
+    var sumFullLR = 0;
+    var fullN = 0;
+    var sumTopLL = 0;
+    var sumTopRR = 0;
+    var sumTopLR = 0;
+    var topN = 0;
     var samplePeak = 0;
 
     for (var i = 0; i < n; i++) {
@@ -522,6 +568,18 @@ var TRUE_PEAK_PHASES = [
         var mid = 0.5 * (mL + mR);
         sumMid += mid * mid;
         monoN++;
+        sumFullLL += xL * xL;
+        sumFullRR += xR * xR;
+        sumFullLR += xL * xR;
+        fullN++;
+        if (measureTop) {
+          var tL = topL.process(xL);
+          var tR = topR.process(xR);
+          sumTopLL += tL * tL;
+          sumTopRR += tR * tR;
+          sumTopLR += tL * tR;
+          topN++;
+        }
       }
 
       var low = lowL.process(xL);
@@ -600,6 +658,21 @@ var TRUE_PEAK_PHASES = [
     var kick = { status: classifyKick(kickStats) };
     if (options.includeDebug) kick.debug = kickStats;
 
+    var width;
+    if (!stereo) {
+      var naBand = { correlation: null, powerDb: null, status: "na" };
+      width = { overall: naBand, low: naBand, top: naBand };
+    } else {
+      var fullStats = correlationStats(sumFullLL, sumFullRR, sumFullLR, fullN);
+      var lowStats = correlationStats(sumLL, sumRR, sumLR, monoN);
+      var topStats = measureTop ? correlationStats(sumTopLL, sumTopRR, sumTopLR, topN) : { correlation: null, powerDb: -120 };
+      width = {
+        overall: { correlation: fullStats.correlation, powerDb: fullStats.powerDb, status: classifyOverallWidth(fullStats.correlation, fullStats.powerDb) },
+        low: { correlation: lowStats.correlation, powerDb: lowStats.powerDb, status: classifyLowWidth(lowStats.correlation, lowStats.powerDb) },
+        top: { correlation: topStats.correlation, powerDb: topStats.powerDb, status: classifyTopWidth(topStats.correlation, topStats.powerDb) },
+      };
+    }
+
     var rel = {};
     var midDb = bandSq.mid != null && bandN ? dbFromPower(bandSq.mid / bandN) : null;
     for (b = 0; b < BANDS.length; b++) {
@@ -628,14 +701,39 @@ var TRUE_PEAK_PHASES = [
       truePeak: { dbtp: dbtp, sampleDbfs: sampleDbfs, status: peakStatus(dbtp) },
       mono: mono,
       kick: kick,
+      width: width,
       bands: rel,
     };
   }
 
   /**
+   * The width issue worth a session, if the rest of the mix is close.
+   * A wide sub is the mono read, not a second problem.
+   * referenceWidth, when present, means "they already sound like this" and
+   * the same status on both files is not a flaw.
+   */
+  function widthStandout(width, monoStatus, referenceWidth) {
+    if (!width || !width.overall || width.overall.status === "na") return null;
+    var top = width.top.status;
+    var overall = width.overall.status;
+    var refTop = referenceWidth && referenceWidth.top ? referenceWidth.top.status : null;
+    var refOverall = referenceWidth && referenceWidth.overall ? referenceWidth.overall.status : null;
+    if (top === "too-wide" && refTop !== "too-wide") return "top-wide";
+    if (top === "narrow" && refTop !== "narrow") return "top-narrow";
+    if (overall === "phasey" && refOverall !== "phasey" && monoStatus !== "drops" && monoStatus !== "thins") return "phasey";
+    if (overall === "narrow" && top === "narrow" && refTop !== "narrow") return "narrow";
+    if (overall === "wide" && monoStatus === "holds" && (top === "ok" || top === "wide") && refOverall !== "wide") return "wide";
+    return null;
+  }
+
+  /**
    * One primary session for a single file.
    * Strong problems: mono cancellation, kick/sub masking, true peak over 0,
-   * loudness well outside both windows, or two-plus bands more than 6 dB off.
+   * loudness well outside both windows, two-plus bands more than 6 dB off,
+   * or a stereo image that is the thing standing out (overly narrow or wide up top).
+   * A wide sub is counted as the mono issue, not a second one.
+   * referenceGap is set when a user reference is far away and the absolute
+   * read would otherwise look finished: "width", "loudness", or "large".
    * Quick Fix is only when the issue is concrete and the rest is close.
    * A clean read, a level problem, or a balance pass goes to the 1-hour session.
    * Three strong problems, or a low-end failure plus a balance mess, is a Deep Dive.
@@ -652,6 +750,7 @@ var TRUE_PEAK_PHASES = [
     var loudBad = m.loudness === "hot" || m.loudness === "quiet";
     var balanceMess = m.balanceStrong >= 2;
     var balanceNotable = m.balanceStrong >= 1 || m.balanceMild >= 2;
+    var width = m.width || null;
 
     var strong = [];
     if (monoBad) strong.push("mono");
@@ -659,6 +758,7 @@ var TRUE_PEAK_PHASES = [
     if (peakBad) strong.push("peak");
     if (loudBad) strong.push("loudness");
     if (balanceMess) strong.push("balance");
+    if (width) strong.push("width");
 
     if (strong.length >= 3 || ((monoBad || maskBad) && balanceMess)) {
       return { session: "deep", reason: "stacked" };
@@ -669,16 +769,21 @@ var TRUE_PEAK_PHASES = [
     if (monoBad || monoMild) quickIssues.push("mono");
     if (maskBad) quickIssues.push("masking");
     if (peakBad || peakMild) quickIssues.push("peak");
+    if (width) quickIssues.push("width");
 
     if (balanceClose && !loudBad && quickIssues.length) {
       if (quickIssues.length === 1 && quickIssues[0] === "mono") return { session: "quick", reason: "mono" };
       if (quickIssues.length === 1 && quickIssues[0] === "masking") return { session: "quick", reason: "masking" };
       if (quickIssues.length === 1 && quickIssues[0] === "peak") return { session: "quick", reason: "peak" };
+      if (quickIssues.length === 1 && quickIssues[0] === "width") return { session: "quick", reason: "width" };
+      if (quickIssues.indexOf("peak") === -1 && quickIssues.indexOf("width") !== -1) return { session: "quick", reason: "image" };
       if (quickIssues.indexOf("peak") === -1) return { session: "quick", reason: "low-end" };
       return { session: "quick", reason: "technical" };
     }
 
     if (!strong.length && !balanceNotable && !monoMild && !peakMild) {
+      if (m.referenceGap === "width") return { session: "quick", reason: "width" };
+      if (m.referenceGap === "loudness" || m.referenceGap === "large") return { session: "standard", reason: "reference" };
       return { session: "standard", reason: "polish" };
     }
     if (strong.length === 1 && strong[0] === "loudness" && !balanceMess) {
@@ -704,6 +809,10 @@ function filterBand(input, sampleRate, lo, hi) {
       kWeightCoefficients: kWeightCoefficients,
       classifyMono: classifyMono,
       classifyKick: classifyKick,
+      classifyOverallWidth: classifyOverallWidth,
+      classifyLowWidth: classifyLowWidth,
+      classifyTopWidth: classifyTopWidth,
+      widthStandout: widthStandout,
       filterBand: filterBand,
     };
 });

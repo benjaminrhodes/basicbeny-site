@@ -11,13 +11,36 @@
   var errorBox = document.getElementById("error");
   var report = document.getElementById("report");
   var lanes = Array.prototype.slice.call(document.querySelectorAll(".lane"));
+  var compareButtons = Array.prototype.slice.call(document.querySelectorAll(".compare-option"));
+  var refDropzone = document.getElementById("ref-dropzone");
+  var refInput = document.getElementById("ref-file");
+  var refTitle = document.getElementById("ref-title");
 
   var chosenFile = null;
+  var refFile = null;
   var lastRaw = null;
+  var lastRefRaw = null;
   var lane = "dnb";
+  var compareMode = "profile";
 
   function selectedLane() {
     return lane;
+  }
+
+  function currentReference() {
+    if (compareMode !== "reference" || !lastRefRaw) return null;
+    return { raw: lastRefRaw, name: refFile ? refFile.name : "your reference" };
+  }
+
+  function canRead() {
+    if (!chosenFile) return false;
+    if (compareMode === "reference" && !refFile) return false;
+    return true;
+  }
+
+  function refreshReport() {
+    if (!lastRaw) return;
+    render(MixCheckReport.buildView(lastRaw, lane, currentReference()));
   }
 
   function setLane(next) {
@@ -26,8 +49,25 @@
       var on = button.getAttribute("data-lane") === next;
       button.setAttribute("aria-checked", on ? "true" : "false");
     });
-    if (lastRaw) render(MixCheckReport.buildView(lastRaw, lane));
+    refreshReport();
   }
+
+  function setCompare(next) {
+    compareMode = next === "reference" ? "reference" : "profile";
+    compareButtons.forEach(function (button) {
+      var on = button.getAttribute("data-compare") === compareMode;
+      button.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    refDropzone.hidden = compareMode !== "reference";
+    readButton.disabled = !canRead();
+    refreshReport();
+  }
+
+  compareButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      setCompare(button.getAttribute("data-compare"));
+    });
+  });
 
   lanes.forEach(function (button, index) {
     button.addEventListener("click", function () {
@@ -49,7 +89,7 @@
   }
 
   function setBusy(busy, label, fraction) {
-    readButton.disabled = busy || !chosenFile;
+    readButton.disabled = busy || !canRead();
     progress.hidden = !busy;
     if (typeof fraction === "number") progressBar.style.width = Math.round(fraction * 100) + "%";
     if (label) progressLabel.textContent = label;
@@ -62,12 +102,15 @@
     fileNote.textContent = (mb >= 0.1 ? mb.toFixed(1) + " MB · " : "") + "Stays in this tab. Close the page and the file is gone.";
   }
 
-  function takeFile(file) {
-    if (!file) return;
+  function acceptableAudio(file) {
     var name = (file.name || "").toLowerCase();
     var type = file.type || "";
-    var ok = name.endsWith(".wav") || name.endsWith(".mp3") || name.endsWith(".wave") || type === "audio/mpeg" || type === "audio/wav" || type === "audio/wave" || type === "audio/x-wav";
-    if (!ok) {
+    return name.endsWith(".wav") || name.endsWith(".mp3") || name.endsWith(".wave") || type === "audio/mpeg" || type === "audio/wav" || type === "audio/wave" || type === "audio/x-wav";
+  }
+
+  function takeFile(file) {
+    if (!file) return;
+    if (!acceptableAudio(file)) {
       showError("That file needs to be a WAV or an MP3.");
       return;
     }
@@ -78,11 +121,31 @@
     chosenFile = file;
     describeFile(file);
     showError("");
-    readButton.disabled = false;
+    readButton.disabled = !canRead();
+  }
+
+  function takeReference(file) {
+    if (!file) return;
+    if (!acceptableAudio(file)) {
+      showError("The reference needs to be a WAV or an MP3.");
+      return;
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      showError("That reference is too big to read in the browser. Export a shorter stereo WAV.");
+      return;
+    }
+    refFile = file;
+    lastRefRaw = null;
+    refTitle.textContent = file.name;
+    showError("");
+    readButton.disabled = !canRead();
   }
 
   fileInput.addEventListener("change", function () {
     takeFile(fileInput.files && fileInput.files[0]);
+  });
+  refInput.addEventListener("change", function () {
+    takeReference(refInput.files && refInput.files[0]);
   });
 
   ["dragenter", "dragover"].forEach(function (name) {
@@ -100,6 +163,22 @@
   dropzone.addEventListener("drop", function (event) {
     var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
     takeFile(file);
+  });
+  ["dragenter", "dragover"].forEach(function (name) {
+    refDropzone.addEventListener(name, function (event) {
+      event.preventDefault();
+      refDropzone.classList.add("is-dragover");
+    });
+  });
+  ["dragleave", "drop"].forEach(function (name) {
+    refDropzone.addEventListener(name, function (event) {
+      event.preventDefault();
+      refDropzone.classList.remove("is-dragover");
+    });
+  });
+  refDropzone.addEventListener("drop", function (event) {
+    var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+    takeReference(file);
   });
   document.addEventListener("dragover", function (event) { event.preventDefault(); });
   document.addEventListener("drop", function (event) { event.preventDefault(); });
@@ -157,7 +236,7 @@
     head.appendChild(el("p", "kicker", "// The read"));
     var title = el("h2", null, chosenFile ? chosenFile.name : "Mix");
     head.appendChild(title);
-    head.appendChild(el("p", "report-meta", "Lane: " + view.laneLabel + " · generic profile · " + view.summary));
+    head.appendChild(el("p", "report-meta", "Lane: " + view.laneLabel + " · " + view.compareLabel + " · " + view.summary));
     if (view.warnings && view.warnings.length) {
       var list = el("ul", "report-warnings");
       view.warnings.forEach(function (line) {
@@ -224,10 +303,24 @@
       lastRaw = await MixCheck.analyze(audio, {
         onProgress: function (fraction) {
           var label = fraction < 0.45 ? "Checking loudness" : fraction < 0.8 ? "Checking the low end" : "Writing the read";
-          setBusy(true, label, 0.08 + fraction * 0.9);
+          setBusy(true, label, 0.08 + fraction * 0.45);
         },
       });
-      render(MixCheckReport.buildView(lastRaw, selectedLane()));
+      if (compareMode === "reference") {
+        if (!refFile) {
+          setBusy(false);
+          showError("Drop a reference bounce, or switch back to the lane profile.");
+          return;
+        }
+        setBusy(true, "Reading the reference", 0.55);
+        var referenceAudio = await loadAudio(refFile);
+        lastRefRaw = await MixCheck.analyze(referenceAudio, {
+          onProgress: function (fraction) {
+            setBusy(true, "Reading the reference", 0.55 + fraction * 0.4);
+          },
+        });
+      }
+      render(MixCheckReport.buildView(lastRaw, selectedLane(), currentReference()));
       setBusy(false);
     } catch (err) {
       lastRaw = null;
@@ -246,7 +339,7 @@
     report.replaceChildren();
     resetButton.hidden = true;
     showError("");
-    readButton.disabled = true;
+    readButton.disabled = !canRead();
     dropzone.focus();
   });
 })();
