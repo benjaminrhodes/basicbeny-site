@@ -188,8 +188,9 @@ section {
 /* Cards Grid */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 1.5rem;
+  max-width: 960px;
 }
 
 .card {
@@ -198,6 +199,8 @@ section {
   border-radius: 8px;
   padding: 2rem;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .card:hover {
@@ -223,6 +226,11 @@ section {
   margin-bottom: 1.5rem;
 }
 
+.card .btn {
+  margin-top: auto;
+  align-self: flex-start;
+}
+
 /* Services */
 .service-tiers {
   display: grid;
@@ -237,6 +245,8 @@ section {
   padding: 2rem;
   text-align: center;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .tier:hover {
@@ -298,6 +308,10 @@ section {
   color: var(--accent);
   font-family: var(--font-mono);
   margin-right: 0.5rem;
+}
+
+.tier .btn {
+  margin-top: auto;
 }
 
 /* About */
