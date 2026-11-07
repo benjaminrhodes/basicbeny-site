@@ -451,15 +451,49 @@ test("each lane keeps its own generic profile", () => {
   assert.notEqual(neuroBalance.figure, "Close to the profile");
 });
 
-test("the homepage only gains a MixCheck link", () => {
+test("the homepage links MixCheck in the page and shows current session prices", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   assert.match(html, /href="mixcheck\/">MixCheck/);
+  assert.match(html, /href="mixcheck\/" class="btn btn-secondary">Try MixCheck/);
+  assert.match(html, /href="mixcheck\/" class="btn btn-primary">Try MixCheck/);
+  assert.match(html, /Hear the low end before you call it done/);
+  assert.match(html, /class="price">Free</);
   assert.match(html, /Elevate your/);
   assert.match(html, /https:\/\/cal\.com\/rhodes-resonance\/30min/);
   assert.match(html, /https:\/\/cal\.com\/rhodes-resonance\/60min/);
   assert.match(html, /https:\/\/cal\.com\/rhodes-resonance\/90minute/);
   assert.match(html, /https:\/\/cal\.com\/rhodes-resonance\/full-project/);
+  assert.match(html, /class="price">\$150</);
+  assert.match(html, /class="price">From \$400</);
+  assert.match(html, /Priced by song count/);
+  assert.doesNotMatch(html, /\$300/);
+  assert.doesNotMatch(html, /\$100/);
+  assert.doesNotMatch(html, />3 hours</);
   assert.equal((html.match(/<h1>/g) || []).length, 1);
+
+  const mix = fs.readFileSync(path.join(__dirname, "..", "mixcheck", "index.html"), "utf8");
+  assert.match(mix, /Quick Fix · 30 minutes · \$40/);
+  assert.match(mix, /1 hour · \$75/);
+  assert.match(mix, /Deep Dive · 1\.5 hours · \$150/);
+  assert.match(mix, /Full Project · Starts at \$400/);
+  assert.match(mix, /how many songs/);
+  assert.match(mix, /One bounce never sends you there/);
+  assert.doesNotMatch(mix, /\$300/);
+  assert.doesNotMatch(mix, /\$100/);
+  assert.doesNotMatch(mix, /3 hours/);
+
+  assert.equal(Report.SESSIONS.quick.price, "$40");
+  assert.equal(Report.SESSIONS.quick.href, "https://cal.com/rhodes-resonance/30min");
+  assert.equal(Report.SESSIONS.standard.price, "$75");
+  assert.equal(Report.SESSIONS.standard.href, "https://cal.com/rhodes-resonance/60min");
+  assert.equal(Report.SESSIONS.deep.price, "$150");
+  assert.equal(Report.SESSIONS.deep.href, "https://cal.com/rhodes-resonance/90minute");
+  assert.match(Report.SESSIONS.deep.button, /1\.5 hours, \$150/);
+  assert.equal(Report.SESSIONS.full, undefined);
+  const reportSrc = fs.readFileSync(path.join(__dirname, "mixcheck-report.js"), "utf8");
+  assert.match(reportSrc, /1\.5 hours, \$150/);
+  assert.doesNotMatch(reportSrc, /\$100/);
+  assert.doesNotMatch(reportSrc, /\$300/);
 });
 
 function mulberry32(seed) {

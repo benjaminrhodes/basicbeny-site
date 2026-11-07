@@ -1,7 +1,8 @@
 // Plain-language report and the one booking it points at.
 // Prices and URLs match the homepage mastering tiers on basicbeny.com:
-// Quick Fix $40, 1 hour $75, Deep Dive $100.
-// Full Project ($300, 3 hours) is homepage-only. One file never selects it.
+// Quick Fix $40, 1 hour $75, Deep Dive $150.
+// Full Project starts at $400 and depends on how many songs. It stays on the
+// homepage. One file never selects it.
 (function (root, factory) {
   var api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
@@ -30,9 +31,9 @@
       id: "deep",
       name: "Deep Dive",
       length: "1.5 hours",
-      price: "$100",
+      price: "$150",
       href: "https://cal.com/rhodes-resonance/90minute",
-      button: "Book a Deep Dive — 1.5 hours, $100",
+      button: "Book a Deep Dive — 1.5 hours, $150",
     },
   };
 
@@ -307,7 +308,7 @@ function alsoLine(view) {
       }
     } else if (rec.reason === "stacked") {
       heading = "This one wants a breakdown.";
-      body = "Several things are stacked, and thirty minutes would turn into a rush. The Deep Dive is the mix breakdown: detailed mastering, and more than one format. 1.5 hours, $100.";
+      body = "Several things are stacked, and thirty minutes would turn into a rush. The Deep Dive is the mix breakdown: detailed mastering, and more than one format. 1.5 hours, $150.";
     } else {
       heading = "Sit with the whole mix.";
       body = view.comparedTo === "reference"
